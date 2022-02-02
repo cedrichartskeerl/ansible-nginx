@@ -1,0 +1,73 @@
+---
+- name: copy private key file for machine user to host
+  template:
+    src: private_key_machine_user.j2
+    dest: ~/.ssh/id_rsa
+    mode: 0400
+    force: no
+
+- name: copy public key file for machine user to host
+  template:
+    src: public_key_machine_user.j2
+    dest: ~/.ssh/id_rsa.pub
+    mode: 0700
+    force: no
+
+# Dit gaat misschien kapot als je niet meer als root bent, dus in dest wijzen naar de map van de user die de cronjob gaat draaien
+- name: ensure github.com is a known host
+  lineinfile:
+    dest: /root/.ssh/known_hosts
+    create: yes
+    state: present
+    line: "{{ lookup('pipe', 'ssh-keyscan -t rsa github.com') }}"
+    regexp: "^github\\.com"
+
+- name: create jekyll directory for subdomains
+  file:
+    path: /var/subdomains
+    state: directory
+    mode: '0755'
+
+- name: pull site files from github repositories
+  git:
+    repo: "git@github.com:{{ github_username }}/{{ item['repo_name'] }}.git"
+    dest: /var/subdomains/{{ item['domain_name'] }}
+    version: "{{ item['branch'] }}"
+  with_items:
+    - "{{ domain_list }}"
+
+- name: run bundle
+  shell: /bin/bash -c '(export PATH="$HOME/.rbenv/bin:$PATH"; eval "$(rbenv init - bash)"; bundle)'
+  args:                                                                     
+    chdir: /var/subdomains/{{ item['domain_name'] }}
+  with_items:
+    - "{{ domain_list }}"
+
+- name: run jekyll build
+  shell: /bin/bash -c '(export PATH="$HOME/.rbenv/bin:$PATH"; eval "$(rbenv init - bash)"; bundle  exec jekyll build)'
+  args:                                                                     
+    chdir: /var/subdomains/{{ item['domain_name'] }}
+  with_items:
+    - "{{ domain_list }}"
+
+- name: remove existing site files
+  file:
+    path: /var/www/html/{{ item['domain_name'] }}
+    state: absent
+  with_items:
+    - "{{ domain_list }}"
+
+- name: create nginx directory for subdomain
+  file:
+    path: /var/www/html/{{ item['domain_name'] }}
+    state: directory
+    mode: '0755'
+  with_items:
+    - "{{ domain_list }}"
+
+- name: move /_site contents to nginx folder
+  shell: mv /var/subdomains/{{ item['domain_name'] }}/_site/* /var/www/html/{{ item['domain_name'] }}
+  with_items:
+    - "{{ domain_list }}"
+  notify:
+    - reload nginx

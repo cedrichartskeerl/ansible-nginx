@@ -1,0 +1,78 @@
+---
+- name: run a local playbook
+  hosts: localhost
+  connection: local 
+  become: true
+  tasks:
+
+{% for item in domain_list %}
+    - name: pull site files from github repositories for {{ item['repo_name'] }}
+      git:
+        repo: "git@github.com:{{ github_username }}/{{ item['repo_name'] }}.git"
+        dest: /var/subdomains/{{ item['domain_name'] }}
+        version: "{{ item['branch'] }}"
+
+    - name: gather git log
+      shell: git log -n 1
+      args:                                                                     
+        chdir: /var/subdomains/{{ item['domain_name'] }}
+      register: pulled_git_hash
+
+    - name: create hash file for {{ item['repo_name'] }}
+      file:
+        path: /var/subdomains/{{ item['repo_name'] }}.txt
+        state: touch
+
+    - name: retrieve content of hash file for {{ item['repo_name'] }}
+      shell: cat {{ item['repo_name'] }}.txt
+      register: stored_git_hash
+
+    - name: build and deploy repo
+      block:
+
+        - name:  checking repo status for {{ item['domain_name'] }}
+          debug:
+            msg: "condition met: stored hash and hash from recent pull recent pull are different"
+
+        - name: overwrite new hash for next run for {{ item['repo_name'] }}
+          copy:
+            content: {{"'{{ pulled_git_hash.stdout_lines.0 }}'"}}
+            dest: {{ item['repo_name'] }}.txt
+
+        - name: run bundle for {{ item['domain_name'] }}
+          shell: /bin/bash -c '(export PATH="$HOME/.rbenv/bin:$PATH"; eval "$(rbenv init - bash)"; bundle)'
+          args:                                                                     
+            chdir: /var/subdomains/{{ item['domain_name'] }}
+
+        - name: run jekyll build for {{ item['domain_name'] }}
+          shell: /bin/bash -c '(export PATH="$HOME/.rbenv/bin:$PATH"; eval "$(rbenv init - bash)"; bundle exec jekyll build)'
+          args:                                                                     
+            chdir: /var/subdomains/{{ item['domain_name'] }}
+
+        - name: remove existing site files for {{ item['domain_name'] }}
+          file:
+            path: /var/www/html/{{ item['domain_name'] }}
+            state: absent
+
+        - name: create nginx directory for {{ item['domain_name'] }}
+          file:
+            path: /var/www/html/{{ item['domain_name'] }}
+            state: directory
+            mode: '0755'
+
+        - name: move /_site contents to nginx folder for {{ item['domain_name'] }}
+          shell: mv /var/subdomains/{{ item['domain_name'] }}/_site/* /var/www/html/{{ item['domain_name'] }}
+          notify:
+            - reload nginx
+
+      # if result from gather git log is different from stored value in text file, enter block
+      when: (stored_git_hash.stdout == "") or (pulled_git_hash.stdout_lines.0 != stored_git_hash.stdout_lines.0)
+
+{% endfor %}
+
+  handlers:
+  - name: reload nginx
+    service:
+      name: nginx
+      state: reloaded
+    changed_when: false

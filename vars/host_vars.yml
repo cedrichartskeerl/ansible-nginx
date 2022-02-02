@@ -1,0 +1,30 @@
+---
+# Droplet creation
+droplet_name: rbenv-3
+droplet_size: s-1vcpu-1gb
+droplet_region: fra1
+droplet_image: ubuntu-20-04-x64
+
+# SSL certificate generation
+acme_email: email@example.com
+
+# User
+username: <user>
+
+# Ruby and rbenv
+ruby_versions: 
+  # - 3.0.0
+  - 3.0.2
+ruby_version_used: 3.0.2
+rbenv_bash_conf: no
+
+# Domains
+github_username: <github user>
+domain_list: 
+  - domain_name: www.example.com
+    repo_name: <repo 1>
+    branch: <branch 1>
+  - domain_name: subdomain.example.com
+    repo_name: <repo 2>
+    branch: <branch 2>
+

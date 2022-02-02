@@ -1,0 +1,17 @@
+---
+- name: enable unattended-upgrades automatic reboot
+  lineinfile:
+    path: /etc/apt/apt.conf.d/50unattended-upgrades
+    regexp: '//Unattended-Upgrade::Automatic-Reboot "false";'
+    line: Unattended-Upgrade::Automatic-Reboot "true";
+  notify:
+    - restart unattended upgrades
+
+- name: set automatic reboot time
+  lineinfile:
+    path: /etc/apt/apt.conf.d/50unattended-upgrades
+    regexp: '//Unattended-Upgrade::Automatic-Reboot-Time "02:00";'
+    line: Unattended-Upgrade::Automatic-Reboot-Time "05:00";
+  notify:
+    - restart unattended upgrades
+

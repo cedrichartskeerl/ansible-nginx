@@ -1,0 +1,21 @@
+---
+- name: configure localhost
+  hosts: web
+  become: true
+  # debugger: on_skipped
+  vars_files:
+    - ./vars/secrets.yml
+    - ./vars/host_vars.yml
+
+  roles:
+    - create-user
+    - nginx
+    - rbenv
+    - set-up-subdomains
+    - lets-encrypt
+    - cronjob
+    - unattended-upgrades
+    # - test
+
+  handlers:
+  - include: handlers/main.yml

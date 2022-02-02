@@ -1,0 +1,12 @@
+web:
+  hosts:
+    # test-paths
+    # "207.154.202.113":
+    # rbenv
+    # "104.248.241.121":
+    # rbenv-3
+    "161.35.91.178":
+  vars:
+    ansible_user: root
+    ansible_ssh_private_key_file: ~/.ssh/id_rsa
+    # ansible_ssh_extra_args: '-o ForwardAgent=yes'

@@ -1,0 +1,26 @@
+---
+- name: apt-get update
+  apt:
+    update_cache: yes
+
+- name: install nginx
+  apt:
+    name: ['nginx', 'ssl-cert']
+    state: latest
+
+- name: check for presence of "managed by Certbot" in nginx config file
+  lineinfile:
+    path: /etc/nginx/sites-available/default
+    regexp: ".*# managed by Certbot.*"
+    state: absent
+  check_mode: yes
+  changed_when: false
+  register: certbot_managed
+
+- name: copy default nginx config file to host when not certbot managed
+  template:
+    src: sites-available-config.j2
+    dest: /etc/nginx/sites-available/default
+  when: certbot_managed.found | default(0) == 0
+  notify:
+    - reload nginx

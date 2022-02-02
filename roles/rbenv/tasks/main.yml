@@ -1,0 +1,78 @@
+---
+- name: apt-get update
+  apt:
+    update_cache: yes
+
+- name: install build dependencies
+  apt:
+    install_recommends: no
+    pkg:
+      - build-essential
+      - curl
+      - git
+      - libcurl4-openssl-dev
+      - libffi-dev
+      - libreadline-dev
+      - libssl-dev
+      - libxml2-dev
+      - libxslt1-dev
+      - zlib1g-dev
+
+- name: checkout rbenv repo
+  git:
+    repo: 'https://github.com/rbenv/rbenv.git'
+    dest: '~/.rbenv'
+    accept_hostkey: yes
+    force: yes
+  become: yes
+
+- name: create plugins directory
+  file:
+    state: directory
+    path: '~/.rbenv/plugins'
+  become: yes
+
+- name: checkout ruby-build repo
+  git:
+    repo: 'https://github.com/rbenv/ruby-build.git'
+    dest: '~/.rbenv/plugins/ruby-build'
+    accept_hostkey: yes
+    force: yes
+  become: yes
+
+- name: checkout rbenv-default-gems repo
+  git:
+    repo: 'https://github.com/rbenv/rbenv-default-gems.git'
+    dest: '~/.rbenv/plugins/rbenv-default-gems'
+    accept_hostkey: yes
+    force: yes
+  become: yes
+
+- name: update .bashrc for rbenv
+  blockinfile:
+    path: ~/.bashrc
+    create: yes
+    marker: "# {mark} ANSIBLE MANAGED BLOCK: RBENV"
+    block: |
+      export PATH="$HOME/.rbenv/bin:$PATH"
+      eval "$(rbenv init - bash)"  
+  become: yes
+
+- name: set default-gems file
+  copy:
+    src: default-gems
+    dest: '~/.rbenv/default-gems'
+  become: yes
+
+- name: install specified ruby version(s)
+  shell: "~/.rbenv/bin/rbenv install {{ item }}"
+  args:
+    creates: "~/.rbenv/versions/{{ item }}"
+  with_items:
+    - "{{ ruby_versions }}"
+
+- name: set ruby version to {{ ruby_version_used }}
+  tags: tmp
+  shell: "~/.rbenv/bin/rbenv global {{ ruby_version_used }}"
+  args:
+    creates: ~/.rbenv/version

@@ -1,0 +1,18 @@
+{% for item in domain_list %}
+
+server {
+	listen 80;
+	listen [::]:80 ;
+
+	root /var/www/html/{{ item['domain_name'] }};
+
+	index index.html;
+
+	server_name {{ item['domain_name'] }};
+
+	location / {
+		try_files $uri $uri/ =404;
+	}
+}
+
+{% endfor %}

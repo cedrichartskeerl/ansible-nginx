@@ -1,0 +1,31 @@
+---
+- name: install let's encrypt certbot client
+  apt:
+    pkg: 
+      - certbot
+      - python3-certbot-nginx
+    state: present
+
+- name: filter domain names from hash
+  set_fact:
+    domain_name_list: "{{ domain_name_list | default([]) + [''.join((item['domain_name']))] }}"
+  loop: "{{ domain_list | list}}"
+
+- name: make sure nginx config file contains all domains
+  template:
+    src: ../../nginx/templates/sites-available-config.j2
+    dest: /etc/nginx/sites-available/default
+  notify:
+    - reload nginx
+
+- name: get and install certificates for nginx
+  shell:
+    "certbot --nginx
+    --noninteractive
+    --agree-tos
+    --redirect
+    --email {{ acme_email }}
+    --expand
+    -d {{ domain_name_list | join(' -d ') }}"
+  notify:
+    - reload nginx

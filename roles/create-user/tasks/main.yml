@@ -1,0 +1,17 @@
+---
+- name: create login user(s)
+  user:
+    name: "{{ username }}"
+    groups:
+      - sudo
+    state: present
+    shell: /bin/bash
+    system: no
+    create_home: yes
+    home: /home/{{ username }}
+
+- name: manage ssh keys
+  authorized_key:
+    user: "{{ username }}"
+    key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+    state: present

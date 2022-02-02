@@ -1,0 +1,22 @@
+---
+- name: install ansible
+  apt:
+    name:
+      - ansible
+    state: present
+
+- name: copy local playbook for cronjob
+  template:
+    src: cronjob.j2
+    dest: /var/subdomains/cronjob.yml
+
+- name: add job
+  cron:
+    cron_file: "/etc/crontab"
+    user: root
+    name: "pull and build subdomain repositories"
+    minute: "*"
+    job: "(flock -n /var/subdomains/cronjob.lock ansible-playbook /var/subdomains/cronjob.yml) 2>&1 | logger -t build"
+    state: present
+  tags: cronjob
+
