@@ -1,3 +1,11 @@
+## What does it do?
+
+This playbook allows you to provision a DigitalOcean droplet to serve static Jekyll websites using Nginx with the press of a button!
+
+All of your domains will be secured with SSL certificates which are automatically renewed with Certbot. And a cronjob running on the droplet will make sure your websites are kept up-to-date by pulling the repositories containing your Jekyll files every minute and rebuilding the websites whenever a change is detected in the hash of the last commit.
+
+To use this playbook, first build your website locally using Jekyll and push these into a Github repository linked to a machine account (see instructions for this below).
+
 ## Creating the droplet
 
 - Rename /vars/secrets.yml.example to /vars/secrets.yml
