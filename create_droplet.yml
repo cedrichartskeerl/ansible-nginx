@@ -10,9 +10,9 @@
 
   - name: add public ssh key to digitalocean account
     digital_ocean_sshkey:
-      name: "Ubuntu"
+      name: "{{ digital_ocean_token_name }}"
       oauth_token: "{{ digital_ocean_token }}"
-      ssh_pub_key: "{{lookup('file', '~/.ssh/id_rsa.pub') }}"
+      ssh_pub_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
       state: present
     register: sshkey_result
 
@@ -31,4 +31,4 @@
 
   - name: save ip and hostname to local hosts file
     debug:
-      msg: "Add the following IP address to the inventory: {{droplet_result.data.ip_address}}"
+      msg: "Add the following IP address to the inventory: {{droplet_result.data.droplet.networks.v4[0].ip_address}}"

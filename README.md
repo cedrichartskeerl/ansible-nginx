@@ -6,10 +6,15 @@ All of your domains will be secured with SSL certificates which are automaticall
 
 To use this playbook, first build your website locally using Jekyll and push these into a Github repository linked to a machine account (see instructions for this below).
 
+Disclaimer: This playbook is no longer being maintained, it is possible some of the steps in the droplet creation playbook will fail because of changes made in DigitalOcean.
+
 ## Creating the droplet
 
+
 - Rename /vars/secrets.yml.example to /vars/secrets.yml
-- Create a personal access token in your DigitalOcean account and save its value in /vars/secrets.yml under `digital_ocean_token:`
+- Create a personal access token in your DigitalOcean account and:
+		- Save its value in /vars/secrets.yml under `digital_ocean_token:`
+		- Save its name in /vars/secrets.yml under `digital_ocean_token_name:`
 - In /vars/host_vars.yml: adjust the domain and subdomain variables to your main domain and subdomain names
 - Run the digitalocean playbook to create the droplet: `ansible-playbook -i inventory.yml create_droplet.yml --ask-become-pass`
 - Copy the IP-adres from the output under de hosts in inventory.yml
